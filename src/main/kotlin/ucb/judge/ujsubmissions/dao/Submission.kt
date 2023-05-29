@@ -23,7 +23,7 @@ class Submission {
     @JoinColumn(name = "language_id")
     var language: Language? = null;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @OneToOne(cascade = [CascadeType.ALL])
     @JoinColumn(name = "contest_problem_id")
     var contestProblem: ContestProblem? = null;
 

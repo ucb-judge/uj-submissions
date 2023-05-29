@@ -1,5 +1,6 @@
 package ucb.judge.ujsubmissions.dao
 
+import org.hibernate.annotations.Cascade
 import javax.persistence.*
 
 @Entity
@@ -23,7 +24,4 @@ class ContestProblem {
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "contestProblem")
     var clarification: List<Clarification>? = null;
-
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "contestProblem")
-    var submissions: List<Submission>? = null;
 }

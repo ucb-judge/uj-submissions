@@ -4,5 +4,5 @@ data class NewSubmissionDto(
     val problemId: Long = 0,
     val contestId: Long? = null,
     val sourceCode: String = "",
-    val language: Long = 0
+    val languageId: Long = 0
 )

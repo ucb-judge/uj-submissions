@@ -1,8 +1,9 @@
 package ucb.judge.ujsubmissions.dto
 
 data class FileDto(
-    val fileId : Long = 0,
+    val s3ObjectId: Long = 0,
+    val contentType: String = "",
     val bucket: String = "",
     val filename: String = "",
-    val contentType: String = ""
+    val status: Boolean = true
 )

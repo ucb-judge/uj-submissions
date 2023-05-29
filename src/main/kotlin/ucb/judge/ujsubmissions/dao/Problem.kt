@@ -1,11 +1,8 @@
 package ucb.judge.ujsubmissions.dao
 
-import com.fasterxml.jackson.annotation.JsonIgnore
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import javax.persistence.*
 
 @Entity
-@JsonIgnoreProperties(ignoreUnknown = true)
 @Table(name = "problem")
 class Problem {
     @Id

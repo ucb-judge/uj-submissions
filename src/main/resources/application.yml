@@ -43,4 +43,3 @@ keycloak:
             - OPTIONS
           patterns:
             - /api/v1/submissions
-            - /api/v1/submissions/{id}
