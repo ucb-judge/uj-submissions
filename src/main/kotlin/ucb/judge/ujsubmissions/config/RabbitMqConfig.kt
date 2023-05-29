@@ -1,9 +1,6 @@
 package ucb.judge.ujsubmissions.config
 
-import org.springframework.amqp.core.AmqpTemplate
-import org.springframework.amqp.core.Binding
-import org.springframework.amqp.core.BindingBuilder
-import org.springframework.amqp.core.DirectExchange
+import org.springframework.amqp.core.*
 import org.springframework.amqp.rabbit.connection.ConnectionFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter
@@ -18,8 +15,8 @@ class RabbitMqConfig {
     }
 
     @Bean
-    fun submission2Queue(): DirectExchange {
-        return DirectExchange("submission2Queue")
+    fun submission2Queue(): Queue {
+        return QueueBuilder.durable("submission2Queue").build()
     }
 
     @Bean

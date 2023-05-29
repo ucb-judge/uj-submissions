@@ -1,10 +1,13 @@
 package ucb.judge.ujsubmissions.bl
 
 import org.springframework.stereotype.Service
+import org.springframework.web.multipart.MultipartFile
+import ucb.judge.ujsubmissions.amqp.producer.SubmissionProducer
 import ucb.judge.ujsubmissions.dao.*
 import ucb.judge.ujsubmissions.dao.repository.LanguageRepository
 import ucb.judge.ujsubmissions.dao.repository.SubmissionRepository
 import ucb.judge.ujsubmissions.dto.NewSubmissionDto
+import ucb.judge.ujsubmissions.dto.SubmissionInfoDto
 import ucb.judge.ujsubmissions.exception.UjNotFoundException
 import ucb.judge.ujsubmissions.service.UjFileUploaderService
 import ucb.judge.ujsubmissions.service.UjProblemsService
@@ -21,7 +24,8 @@ class SubmissionBl constructor(
     private val ujUsersService: UjUsersService,
     private val keycloakBl: KeycloakBl,
     private val languageRepository: LanguageRepository,
-    private val submissionRepository: SubmissionRepository
+    private val submissionRepository: SubmissionRepository,
+    private val submissionProducer: SubmissionProducer
 ) {
 
     fun createSubmission(submission: NewSubmissionDto): Long {
@@ -75,6 +79,18 @@ class SubmissionBl constructor(
         submissionEntity.submissionDate = Timestamp(Date().time)
 
         val savedSubmission = submissionRepository.save(submissionEntity)
+
+        // open thread to process submission
+        val submissionThread = Thread {
+            val submissionInfoDto = SubmissionInfoDto(
+                submissionId = savedSubmission.submissionId,
+                problemId = savedSubmission.contestProblem!!.problem!!.problemId,
+                languageId = savedSubmission.language!!.languageId,
+            )
+            submissionProducer.sendSubmission(submissionFile, submissionInfoDto)
+        }
+        submissionThread.start()
+
         return savedSubmission.submissionId
     }
 }

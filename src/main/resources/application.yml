@@ -4,8 +4,8 @@ spring:
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
-    username: ${RABBITMQ_USERNAME:uj-rabbit}
-    password: ${RABBITMQ_PASSWORD:uj-rabiit}
+    username: ${RABBITMQ_USERNAME:uj-submissions}
+    password: ${RABBITMQ_PASSWORD:uj-submissions123}
     virtual-host: ${RABBITMQ_VIRTUAL_HOST:ucb-judge-rabbit}
   datasource:
     type: org.postgresql.jdbc2.optional.SimpleDataSource
