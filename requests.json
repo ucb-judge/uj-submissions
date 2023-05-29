@@ -1,0 +1,6 @@
+{
+  "problemId": 1,
+  "sourceCode": "public class Main {\n    public static void main(String[] args) {\n        System.out.println(\"Hello World!\");\n    }\n}",
+  "languageId": 1,
+  "contestId": 1
+}
