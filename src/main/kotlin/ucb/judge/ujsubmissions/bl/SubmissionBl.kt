@@ -80,16 +80,12 @@ class SubmissionBl constructor(
 
         val savedSubmission = submissionRepository.save(submissionEntity)
 
-        // open thread to process submission
-        val submissionThread = Thread {
-            val submissionInfoDto = SubmissionInfoDto(
-                submissionId = savedSubmission.submissionId,
-                problemId = savedSubmission.contestProblem!!.problem!!.problemId,
-                languageId = savedSubmission.language!!.languageId,
-            )
-            submissionProducer.sendSubmission(submissionFile, submissionInfoDto)
-        }
-        submissionThread.start()
+        val submissionInfoDto = SubmissionInfoDto(
+            submissionId = savedSubmission.submissionId,
+            problemId = savedSubmission.contestProblem!!.problem!!.problemId,
+            languageId = savedSubmission.language!!.languageId,
+        )
+        submissionProducer.sendSubmission(submissionFile, submissionInfoDto)
 
         return savedSubmission.submissionId
     }

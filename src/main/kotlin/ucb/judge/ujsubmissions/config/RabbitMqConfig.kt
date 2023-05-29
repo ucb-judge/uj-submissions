@@ -20,7 +20,7 @@ class RabbitMqConfig {
     }
 
     @Bean
-    fun submission2Binding(submission2Queue: DirectExchange, submission2Exchange: DirectExchange): Binding {
+    fun submission2Binding(submission2Queue: Queue, submission2Exchange: DirectExchange): Binding {
         return BindingBuilder
             .bind(submission2Queue)
             .to(submission2Exchange)

@@ -1,5 +1,6 @@
 package ucb.judge.ujsubmissions.amqp.producer
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.amqp.core.AmqpTemplate
 import org.springframework.amqp.core.Message
 import org.springframework.amqp.core.MessageProperties
@@ -18,9 +19,10 @@ class SubmissionProducer constructor(
 
         val messageProperties = MessageProperties()
         messageProperties.contentType = contentType
-        messageProperties.setHeader("submission", submissionInfoDto)
+        val objectMapper = ObjectMapper()
+        messageProperties.setHeader("submission", objectMapper.writeValueAsString(submissionInfoDto))
         val submission = Message(sourceCode.bytes, messageProperties)
-        val response = amqpTemplate.convertAndSend("submission2Exchange", "submission2RoutingKey", submission)
+        amqpTemplate.convertAndSend("submission2Exchange", "submission2RoutingKey", submission)
         return true
     }
 }
