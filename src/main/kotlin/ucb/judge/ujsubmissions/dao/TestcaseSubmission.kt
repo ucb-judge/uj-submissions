@@ -22,6 +22,10 @@ class TestcaseSubmission {
     @JoinColumn(name = "verdict_type_id")
     var verdictType: VerdictType? = null;
 
+    @OneToOne
+    @JoinColumn(name = "s3_output")
+    var s3Output: S3Object? = null;
+
     @Column(name = "memory")
     var memory: Long = 0;
 
