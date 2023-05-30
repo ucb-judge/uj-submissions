@@ -14,7 +14,7 @@ class Problem {
     var title: String = "";
 
     @OneToOne
-    @JoinColumn(name = "s3_description_id")
+    @JoinColumn(name = "s3_description")
     var s3Description: S3Object? = null;
 
     @Column(name = "max_time")

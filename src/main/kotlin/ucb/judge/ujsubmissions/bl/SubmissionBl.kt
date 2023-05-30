@@ -56,7 +56,7 @@ class SubmissionBl constructor(
 
         // upload file to minio
         val submissionFile = FileUtils.createSubmissionFile(submission.sourceCode, language.extension)
-        val fileMetadata = ujFileUploaderService.uploadFile(submissionFile, "submissions")
+        val fileMetadata = ujFileUploaderService.uploadFile(submissionFile, "submissions", token)
         val s3Object = S3Object()
         s3Object.s3ObjectId = fileMetadata.data!!.s3ObjectId
 

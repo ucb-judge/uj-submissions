@@ -13,18 +13,6 @@ class Student {
     @Column(name = "kc_uuid")
     var kcUuid: String = "";
 
-    @Column(name = "first_name")
-    var firstName: String = "";
-
-    @Column(name = "last_name")
-    var lastName: String = "";
-
-    @Column(name = "email")
-    var email: String = "";
-
-    @Column(name = "password")
-    var password: String = "";
-
     @Column(name = "status")
     var status: Boolean = true;
 
