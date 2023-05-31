@@ -6,9 +6,9 @@ import ucb.judge.ujsubmissions.amqp.producer.SubmissionProducer
 import ucb.judge.ujsubmissions.dao.*
 import ucb.judge.ujsubmissions.dao.repository.LanguageRepository
 import ucb.judge.ujsubmissions.dao.repository.SubmissionRepository
-import ucb.judge.ujsubmissions.dto.NewSubmissionDto
-import ucb.judge.ujsubmissions.dto.SubmissionInfoDto
+import ucb.judge.ujsubmissions.dto.*
 import ucb.judge.ujsubmissions.exception.UjNotFoundException
+import ucb.judge.ujsubmissions.service.MinioService
 import ucb.judge.ujsubmissions.service.UjFileUploaderService
 import ucb.judge.ujsubmissions.service.UjProblemsService
 import ucb.judge.ujsubmissions.service.UjUsersService
@@ -22,12 +22,18 @@ class SubmissionBl constructor(
     private val ujFileUploaderService: UjFileUploaderService,
     private val ujProblemsService: UjProblemsService,
     private val ujUsersService: UjUsersService,
+    private val minioService: MinioService,
     private val keycloakBl: KeycloakBl,
     private val languageRepository: LanguageRepository,
     private val submissionRepository: SubmissionRepository,
     private val submissionProducer: SubmissionProducer
 ) {
 
+    /**
+     * Business logic to create a submission. This method will create a submission with the given data.
+     * @param submission: Data of the submission.
+     * @return Long: id of the created submission.
+     */
     fun createSubmission(submission: NewSubmissionDto): Long {
         val token = "Bearer ${keycloakBl.getToken()}"
 
@@ -88,5 +94,64 @@ class SubmissionBl constructor(
         submissionProducer.sendSubmission(submissionFile, submissionInfoDto)
 
         return savedSubmission.submissionId
+    }
+
+    /**
+     * Business Logic to get a submission by its id.
+     * @param submissionId: id of the submission to get.
+     * @return SubmissionDto: submission with the given id.
+     * @throws UjNotFoundException: if the submission does not exist.
+     */
+    fun getSubmissionById(submissionId: Long): SubmissionDto {
+        val submission = submissionRepository.findBySubmissionIdAndStatusIsTrue(submissionId)
+            ?: throw UjNotFoundException("Submission not found")
+        val contest = submission.contestProblem!!.contest
+        if(contest != null) {
+            // check if the professor is the owner of the contest
+            // TODO: call uj-contests to validate
+        }
+        // generate keycloak token
+        val token = "Bearer ${keycloakBl.getToken()}"
+
+        val submissionDto = SubmissionDto()
+        submissionDto.submissionId = submission.submissionId
+        // call uj-problems to get problem info
+        val problem = ujProblemsService.getProblemMinimal(submission.contestProblem!!.problem!!.problemId, token).data!!
+        submissionDto.problem = problem
+
+        submissionDto.language = LanguageDto(
+            languageId = submission.language!!.languageId,
+            name = submission.language!!.name,
+        )
+        submissionDto.sourceCode = String(minioService.getFile(submission.s3SourceCode!!.bucket, submission.s3SourceCode!!.filename))
+        submissionDto.verdict = VerdictTypeDto(
+            verdictTypeId = submission.verdictType!!.verdictTypeId,
+            name = submission.verdictType!!.description,
+        )
+        submissionDto.submissionDate = submission.submissionDate!!
+        // get testcases
+        val problemTestcases = ujProblemsService.getProblemTestcases(submission.contestProblem!!.problem!!.problemId, token).data!!
+        // create map from problemTestcases by id
+        val problemTestcasesMap = mapOf(
+            *problemTestcases.map { testcase -> testcase.testcaseId to testcase }.toTypedArray()
+        )
+
+        val testcaseList = mutableListOf<TestcaseSubmissionDto>()
+        submission.testcaseSubmissions!!.forEach { testcaseSubmission ->
+            val testcaseDto = TestcaseSubmissionDto(
+                testcaseId = testcaseSubmission.testcaseSubmissionId,
+                input = problemTestcasesMap[testcaseSubmission.testcase!!.testcaseId]!!.input,
+                output = String(minioService.getFile(testcaseSubmission.s3Output!!.bucket, testcaseSubmission.s3Output!!.filename)),
+                verdict = VerdictTypeDto(
+                    verdictTypeId = testcaseSubmission.verdictType!!.verdictTypeId,
+                    name = testcaseSubmission.verdictType!!.description,
+                ),
+                time = testcaseSubmission.time,
+                memory = testcaseSubmission.memory,
+            )
+            testcaseList.add(testcaseDto)
+        }
+        submissionDto.testcases = testcaseList
+        return submissionDto
     }
 }

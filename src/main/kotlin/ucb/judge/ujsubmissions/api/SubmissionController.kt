@@ -2,13 +2,11 @@ package ucb.judge.ujsubmissions.api
 
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import ucb.judge.ujsubmissions.bl.SubmissionBl
 import ucb.judge.ujsubmissions.dto.NewSubmissionDto
 import ucb.judge.ujsubmissions.dto.ResponseDto
+import ucb.judge.ujsubmissions.dto.SubmissionDto
 
 @RestController
 @RequestMapping("/api/v1/submissions")
@@ -25,5 +23,18 @@ class SubmissionController constructor(
     fun createSubmission(@RequestBody submission: NewSubmissionDto): ResponseEntity<ResponseDto<Long>> {
         val id = submissionBl.createSubmission(submission)
         return ResponseEntity(ResponseDto(data = id, message = "Submission created successfully", successful = true), HttpStatus.CREATED)
+    }
+
+    /**
+     * Method to view the details of a submission. For this, the user should have the role of student.
+     * A professor may view the details of a submission if the submission is from a student that is enrolled in a course
+     * that the professor is teaching.
+     * @param submissionId: Id of the submission.
+     * @return ResponseEntity<ResponseDto<SubmissionDto>>: Response with the submission.
+     */
+    @GetMapping("/{id}")
+    fun getSubmissionById(@PathVariable id: Long): ResponseEntity<ResponseDto<SubmissionDto>> {
+        val submission = submissionBl.getSubmissionById(id)
+        return ResponseEntity(ResponseDto(data = submission, message = "Submission retrieved successfully", successful = true), HttpStatus.OK)
     }
 }

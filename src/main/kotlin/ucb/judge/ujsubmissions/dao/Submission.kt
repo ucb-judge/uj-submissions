@@ -38,5 +38,8 @@ class Submission {
     var status: Boolean = true;
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "submission")
+    var testcaseSubmissions: List<TestcaseSubmission>? = null;
+
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "submission")
     var comments: List<Comment>? = null;
 }

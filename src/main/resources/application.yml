@@ -43,3 +43,9 @@ keycloak:
             - OPTIONS
           patterns:
             - /api/v1/submissions
+
+minio:
+  url: ${MINIO_SERVER_URI:http://localhost:9000}
+  access:
+    key: ${MINIO_ACCESS_KEY:c5hPg2BgTgDxxbeHNhwF}
+    secret: ${MINIO_SECRET_KEY:lDFhBBL83nE5xn5rz6VZWbwxWgtJIWeTTWae9AMv}
