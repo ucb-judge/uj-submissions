@@ -121,13 +121,16 @@ class SubmissionBl constructor(
 
         submissionDto.language = LanguageDto(
             languageId = submission.language!!.languageId,
+            extension = submission.language!!.extension,
             name = submission.language!!.name,
         )
         submissionDto.sourceCode = String(minioService.getFile(submission.s3SourceCode!!.bucket, submission.s3SourceCode!!.filename))
-        submissionDto.verdict = VerdictTypeDto(
-            verdictTypeId = submission.verdictType!!.verdictTypeId,
-            name = submission.verdictType!!.description,
-        )
+        if(submission.verdictType != null) {
+            submissionDto.verdict = VerdictTypeDto(
+                verdictTypeId = submission.verdictType!!.verdictTypeId,
+                name = submission.verdictType!!.description,
+            )
+        }
         submissionDto.submissionDate = submission.submissionDate!!
         // get testcases
         val problemTestcases = ujProblemsService.getProblemTestcases(submission.contestProblem!!.problem!!.problemId, token).data!!
