@@ -7,6 +7,7 @@ import ucb.judge.ujsubmissions.bl.SubmissionBl
 import ucb.judge.ujsubmissions.dto.NewSubmissionDto
 import ucb.judge.ujsubmissions.dto.ResponseDto
 import ucb.judge.ujsubmissions.dto.SubmissionDto
+import ucb.judge.ujsubmissions.dto.SubmissionStatusDto
 
 @RestController
 @RequestMapping("/api/v1/submissions")
@@ -35,6 +36,18 @@ class SubmissionController constructor(
     @GetMapping("/{id}")
     fun getSubmissionById(@PathVariable id: Long): ResponseEntity<ResponseDto<SubmissionDto>> {
         val submission = submissionBl.getSubmissionById(id)
+        return ResponseEntity(ResponseDto(data = submission, message = "Submission retrieved successfully", successful = true), HttpStatus.OK)
+    }
+
+    /**
+     * Method to view the status of a submission. For this, the user should have the role of student.
+     * This method is used when the user wants to know if the submission has been judged.
+     * @param submissionId: Id of the submission.
+     * @return ResponseEntity<ResponseDto<SubmissionStatusDto>>: Response with the submission.
+     */
+    @GetMapping("/{id}/status")
+    fun getSubmissionStatusById(@PathVariable id: Long): ResponseEntity<ResponseDto<SubmissionStatusDto>> {
+        val submission = submissionBl.getSubmissionStatus(id)
         return ResponseEntity(ResponseDto(data = submission, message = "Submission retrieved successfully", successful = true), HttpStatus.OK)
     }
 }

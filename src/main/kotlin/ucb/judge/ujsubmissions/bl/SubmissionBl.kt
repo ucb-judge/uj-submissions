@@ -154,4 +154,36 @@ class SubmissionBl constructor(
         submissionDto.testcases = testcaseList
         return submissionDto
     }
+
+    /**
+     * Business logic to get a submission's status by its id.
+     */
+fun getSubmissionStatus(submissionId: Long): SubmissionStatusDto {
+        val submission = submissionRepository.findBySubmissionIdAndStatusIsTrue(submissionId)
+            ?: throw UjNotFoundException("Submission not found")
+        val testcaseCount = submission.contestProblem!!.problem!!.testcases!!.size
+        val testcaseSubmissions = submission.testcaseSubmissions!!
+        val submissionStatusList = mutableListOf<TestcaseStatusDto>()
+        testcaseSubmissions.forEach { testcaseSubmission ->
+            submissionStatusList.add(
+                TestcaseStatusDto(
+                    testcaseId = testcaseSubmission.testcase!!.testcaseId,
+                    verdictType = VerdictTypeDto(
+                        verdictTypeId = testcaseSubmission.verdictType!!.verdictTypeId,
+                        name = testcaseSubmission.verdictType!!.description,
+                    ),
+                    time = testcaseSubmission.time,
+                    memory = testcaseSubmission.memory,
+                )
+            )
+        }
+        // check if the submission is finished
+        val finished = testcaseSubmissions.size == testcaseCount
+        return SubmissionStatusDto(
+            submissionId = submission.submissionId,
+            isDone = finished,
+            testcases = submissionStatusList,
+            testcaseCount = testcaseCount
+        )
+    }
 }
