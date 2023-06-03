@@ -181,7 +181,7 @@ fun getSubmissionStatus(submissionId: Long): SubmissionStatusDto {
             )
         }
         // check if the submission is finished
-        val finished = testcaseSubmissions.size == testcaseCount
+        val finished = testcaseSubmissions.size == testcaseCount || submission.verdictType != null
         return SubmissionStatusDto(
             submissionId = submission.submissionId,
             isDone = finished,

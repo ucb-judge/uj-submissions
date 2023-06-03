@@ -61,6 +61,7 @@ class VerdictConsumer constructor(
         // check if is last testcase
         if (verdictDto.isLast) {
             // update submission with the final verdict
+            logger.info("Verdict for submission ${verdictDto.submissionId}: ${verdict.abbreviation}")
             submission.verdictType = verdict
             submissionRepository.save(submission)
         }
