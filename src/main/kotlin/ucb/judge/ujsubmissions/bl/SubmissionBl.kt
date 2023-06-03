@@ -7,6 +7,8 @@ import ucb.judge.ujsubmissions.dao.*
 import ucb.judge.ujsubmissions.dao.repository.LanguageRepository
 import ucb.judge.ujsubmissions.dao.repository.SubmissionRepository
 import ucb.judge.ujsubmissions.dto.*
+import ucb.judge.ujsubmissions.exception.UjBadRequestException
+import ucb.judge.ujsubmissions.exception.UjForbiddenException
 import ucb.judge.ujsubmissions.exception.UjNotFoundException
 import ucb.judge.ujsubmissions.service.MinioService
 import ucb.judge.ujsubmissions.service.UjFileUploaderService
@@ -28,6 +30,9 @@ class SubmissionBl constructor(
     private val submissionRepository: SubmissionRepository,
     private val submissionProducer: SubmissionProducer
 ) {
+    companion object {
+        private val logger = org.slf4j.LoggerFactory.getLogger(SubmissionBl::class.java)
+    }
 
     /**
      * Business logic to create a submission. This method will create a submission with the given data.
@@ -36,7 +41,6 @@ class SubmissionBl constructor(
      */
     fun createSubmission(submission: NewSubmissionDto): Long {
         val token = "Bearer ${keycloakBl.getToken()}"
-
         // validate problem
         if(!ujProblemsService.problemExists(submission.problemId, token).data!!) {
             throw UjNotFoundException("Problem does not exist")
@@ -47,7 +51,12 @@ class SubmissionBl constructor(
         // validate language
         val language: Language = languageRepository.findByLanguageIdAndStatusIsTrue(submission.languageId)
             ?: throw UjNotFoundException("Language not found")
-        // TODO: validate language is within admitted languages for problem
+        val admittedLanguages: List<Long> = ujProblemsService.getAllAdmittedLanguages(submission.problemId, token).data!!.map {
+            it.languageId
+        }
+        if(!admittedLanguages.contains(language.languageId)) {
+            throw UjBadRequestException("Language not admitted")
+        }
 
         // validate student
         val kcUuid = KeycloakSecurityContextHolder.getSubject() ?: throw UjNotFoundException("Student not found")
@@ -103,19 +112,29 @@ class SubmissionBl constructor(
      * @throws UjNotFoundException: if the submission does not exist.
      */
     fun getSubmissionById(submissionId: Long): SubmissionDto {
+        logger.info("Getting submission with id $submissionId")
         val submission = submissionRepository.findBySubmissionIdAndStatusIsTrue(submissionId)
             ?: throw UjNotFoundException("Submission not found")
         val contest = submission.contestProblem!!.contest
         if(contest != null) {
+            logger.info("Submission $submissionId is from contest ${contest.contestId}")
             // check if the professor is the owner of the contest
             // TODO: call uj-contests to validate
         }
+        // check if the student is the owner of the submission
+        val kcUuid = KeycloakSecurityContextHolder.getSubject() ?: throw UjBadRequestException("Invalid token")
+        if(kcUuid != submission.student!!.kcUuid) {
+            logger.warn("Student $kcUuid is not the owner of submission $submissionId")
+            throw UjForbiddenException("You are not allowed to see this submission")
+        }
+
         // generate keycloak token
         val token = "Bearer ${keycloakBl.getToken()}"
 
         val submissionDto = SubmissionDto()
         submissionDto.submissionId = submission.submissionId
         // call uj-problems to get problem info
+        logger.info("Getting problem ${submission.contestProblem!!.problem!!.problemId} from uj-problems")
         val problem = ujProblemsService.getProblemMinimal(submission.contestProblem!!.problem!!.problemId, token).data!!
         submissionDto.problem = problem
 
@@ -133,6 +152,7 @@ class SubmissionBl constructor(
         }
         submissionDto.submissionDate = submission.submissionDate!!
         // get testcases
+        logger.info("Getting testcases from submission $submissionId")
         val problemTestcases = ujProblemsService.getProblemTestcases(submission.contestProblem!!.problem!!.problemId, token).data!!
         // create map from problemTestcases by id
         val problemTestcasesMap = mapOf(
@@ -162,8 +182,17 @@ class SubmissionBl constructor(
      * Business logic to get a submission's status by its id.
      */
 fun getSubmissionStatus(submissionId: Long): SubmissionStatusDto {
+        logger.info("Getting status of submission $submissionId")
         val submission = submissionRepository.findBySubmissionIdAndStatusIsTrue(submissionId)
             ?: throw UjNotFoundException("Submission not found")
+        // check if the student is the owner of the submission
+        logger.info("token ${KeycloakSecurityContextHolder.getSubject()}")
+        val kcUuid = KeycloakSecurityContextHolder.getSubject() ?: throw UjBadRequestException("Invalid token")
+        if(kcUuid != submission.student!!.kcUuid) {
+            logger.warn("Student $kcUuid is not the owner of submission $submissionId")
+            throw UjForbiddenException("You are not allowed to see this submission")
+        }
+
         val testcaseCount = submission.contestProblem!!.problem!!.testcases!!.size
         val testcaseSubmissions = submission.testcaseSubmissions!!
         val submissionStatusList = mutableListOf<TestcaseStatusDto>()
@@ -182,6 +211,7 @@ fun getSubmissionStatus(submissionId: Long): SubmissionStatusDto {
         }
         // check if the submission is finished
         val finished = testcaseSubmissions.size == testcaseCount || submission.verdictType != null
+        logger.info("Submission $submissionId is finished: $finished")
         return SubmissionStatusDto(
             submissionId = submission.submissionId,
             isDone = finished,

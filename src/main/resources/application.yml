@@ -43,6 +43,7 @@ keycloak:
             - OPTIONS
           patterns:
             - /api/v1/submissions
+            - /api/v1/submissions/*
 
 minio:
   url: ${MINIO_SERVER_URI:http://localhost:9000}
