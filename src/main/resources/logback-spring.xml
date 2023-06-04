@@ -10,9 +10,9 @@
         <append>true</append>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!--    for macOS    -->
-            <!--<fileNamePattern>/var/ucb-judge/logs/${application}/${application}-${port}-%d{yyyy-MM-dd}.%i.log</fileNamePattern>&ndash;&gt;-->
+            <fileNamePattern>/opt/ucb-judge/logs/${application}/${application}-${port}-%d{yyyy-MM-dd}.%i.log</fileNamePattern>-->
             <!--    for Windows    -->
-            <fileNamePattern>D:/logs/${application}/${application}-${port}-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+<!--            <fileNamePattern>D:/logs/${application}/${application}-${port}-%d{yyyy-MM-dd}.%i.log</fileNamePattern>-->
             <timeBasedFileNamingAndTriggeringPolicy
                     class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
                 <maxFileSize>10MB</maxFileSize>
