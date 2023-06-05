@@ -18,4 +18,7 @@ class Student {
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "student")
     var submissions: List<Submission>? = null;
+
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "student")
+    var contestScoreboards: List<ContestScoreboard>? = null;
 }

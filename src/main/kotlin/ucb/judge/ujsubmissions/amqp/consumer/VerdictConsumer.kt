@@ -5,10 +5,7 @@ import org.springframework.stereotype.Component
 import ucb.judge.ujsubmissions.bl.KeycloakBl
 import ucb.judge.ujsubmissions.dao.S3Object
 import ucb.judge.ujsubmissions.dao.TestcaseSubmission
-import ucb.judge.ujsubmissions.dao.repository.SubmissionRepository
-import ucb.judge.ujsubmissions.dao.repository.TestcaseRepository
-import ucb.judge.ujsubmissions.dao.repository.TestcaseSubmissionRepository
-import ucb.judge.ujsubmissions.dao.repository.VerdictTypeRepository
+import ucb.judge.ujsubmissions.dao.repository.*
 import ucb.judge.ujsubmissions.dto.VerdictDto
 import ucb.judge.ujsubmissions.service.KeycloakService
 import ucb.judge.ujsubmissions.service.UjFileUploaderService
@@ -20,6 +17,7 @@ class VerdictConsumer constructor(
     private val testcaseRepository: TestcaseRepository,
     private val verdictTypeRepository: VerdictTypeRepository,
     private val testcaseSubmissionRepository: TestcaseSubmissionRepository,
+    private val contestScoreboardRepository: ContestScoreboardRepository,
     private val ujFileUploaderService: UjFileUploaderService,
     private val keycloakBl: KeycloakBl
 ) {
@@ -63,6 +61,30 @@ class VerdictConsumer constructor(
             // update submission with the final verdict
             logger.info("Verdict for submission ${verdictDto.submissionId}: ${verdict.abbreviation}")
             submission.verdictType = verdict
+            // update the scoreboard if the submission is for a contest
+            if(submission.contestProblem!!.contest != null) {
+                logger.info("Updating scoreboard")
+                // check if the problem hasn't been already solved by the user
+                val solved = submissionRepository.countByContestProblemAndVerdictTypeAndStudent(
+                    submission.contestProblem!!,
+                    verdict,
+                    submission.student!!
+                )
+                logger.info("Solved: $solved")
+                if(solved == 0L) {
+                    logger.info("Problem not solved yet")
+                    // update scoreboard
+                    val scoreboard = contestScoreboardRepository.findByContestContestIdAndStudent(
+                        submission.contestProblem!!.contest!!.contestId,
+                        submission.student!!
+                    );
+                    logger.info("Scoreboard: ${scoreboard!!.contestScoreboardId}")
+                    scoreboard.problemsSolved += 1;
+                    contestScoreboardRepository.save(scoreboard);
+                } else {
+                    logger.info("Problem already solved")
+                }
+            }
             submissionRepository.save(submission)
         }
     }

@@ -28,4 +28,7 @@ class Contest {
 
     @OneToMany(fetch = FetchType.EAGER, mappedBy = "contest")
     var contestProblems: List<ContestProblem>? = null;
+
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "contest")
+    var contestScoreboard : List<ContestScoreboard>? = null;
 }
