@@ -22,5 +22,5 @@ interface UjContestService {
         @RequestHeader("Authorization") token: String,
         @RequestParam(name = "kcUuid") kcUuid: String,
         @RequestParam(name = "problemId") problemId: Long,
-    ): ResponseDto<Boolean>
+    ): ResponseDto<Long>
 }

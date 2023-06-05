@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import ucb.judge.ujsubmissions.amqp.producer.SubmissionProducer
 import ucb.judge.ujsubmissions.dao.*
+import ucb.judge.ujsubmissions.dao.repository.ContestProblemRepository
 import ucb.judge.ujsubmissions.dao.repository.LanguageRepository
 import ucb.judge.ujsubmissions.dao.repository.SubmissionRepository
 import ucb.judge.ujsubmissions.dto.*
@@ -26,6 +27,7 @@ class SubmissionBl constructor(
     private val keycloakBl: KeycloakBl,
     private val languageRepository: LanguageRepository,
     private val submissionRepository: SubmissionRepository,
+    private val contestProblemRepository: ContestProblemRepository,
     private val submissionProducer: SubmissionProducer
 ) {
     companion object {
@@ -62,13 +64,18 @@ class SubmissionBl constructor(
         val student = Student()
         student.studentId = studentId
 
+        var contestProblemId = -1L;
         // validate contest
         if(submission.contestId != null) {
             logger.info("Retrieving contest ${submission.contestId}")
             val studentSubject = KeycloakSecurityContextHolder.getSubject() ?: throw UjNotFoundException("Student not found")
-            val contest = ujContestService.validateContestSubmission(submission.contestId, token, studentSubject, submission.problemId)
-
-            logger.info("Contest ${submission.contestId} retrieved")
+            try {
+                val contest = ujContestService.validateContestSubmission(submission.contestId, token, studentSubject, submission.problemId)
+                contestProblemId = contest.data!!
+                logger.info("Contest ${submission.contestId} retrieved")
+            } catch (e: Exception) {
+                throw UjForbiddenException("Student cannot submit to this contest")
+            }
         }
 
         // upload file to minio
@@ -78,14 +85,14 @@ class SubmissionBl constructor(
         s3Object.s3ObjectId = fileMetadata.data!!.s3ObjectId
 
         // store in database
-        val contestProblemEntity = ContestProblem()
+        var contestProblemEntity = ContestProblem()
         contestProblemEntity.problem = problem
         if(submission.contestId != null) {
-            val contest = Contest()
-            contest.contestId = submission.contestId
-            contestProblemEntity.contest = contest
+            contestProblemEntity = contestProblemRepository.findByContestProblemIdAndStatusIsTrue(contestProblemId)
+                ?: throw UjNotFoundException("Contest problem not found")
+        } else {
+            contestProblemEntity.status = true
         }
-        contestProblemEntity.status = true
 
         val submissionEntity = Submission()
         submissionEntity.contestProblem = contestProblemEntity
