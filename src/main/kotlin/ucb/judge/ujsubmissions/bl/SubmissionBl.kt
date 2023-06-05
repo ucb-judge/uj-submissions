@@ -10,10 +10,7 @@ import ucb.judge.ujsubmissions.dto.*
 import ucb.judge.ujsubmissions.exception.UjBadRequestException
 import ucb.judge.ujsubmissions.exception.UjForbiddenException
 import ucb.judge.ujsubmissions.exception.UjNotFoundException
-import ucb.judge.ujsubmissions.service.MinioService
-import ucb.judge.ujsubmissions.service.UjFileUploaderService
-import ucb.judge.ujsubmissions.service.UjProblemsService
-import ucb.judge.ujsubmissions.service.UjUsersService
+import ucb.judge.ujsubmissions.service.*
 import ucb.judge.ujsubmissions.utils.FileUtils
 import ucb.judge.ujsubmissions.utils.KeycloakSecurityContextHolder
 import java.sql.Timestamp
@@ -24,6 +21,7 @@ class SubmissionBl constructor(
     private val ujFileUploaderService: UjFileUploaderService,
     private val ujProblemsService: UjProblemsService,
     private val ujUsersService: UjUsersService,
+    private val ujContestService: UjContestService,
     private val minioService: MinioService,
     private val keycloakBl: KeycloakBl,
     private val languageRepository: LanguageRepository,
@@ -66,7 +64,11 @@ class SubmissionBl constructor(
 
         // validate contest
         if(submission.contestId != null) {
-            // TODO: validate with uj-contests
+            logger.info("Retrieving contest ${submission.contestId}")
+            val studentSubject = KeycloakSecurityContextHolder.getSubject() ?: throw UjNotFoundException("Student not found")
+            val contest = ujContestService.validateContestSubmission(submission.contestId, token, studentSubject, submission.problemId)
+
+            logger.info("Contest ${submission.contestId} retrieved")
         }
 
         // upload file to minio

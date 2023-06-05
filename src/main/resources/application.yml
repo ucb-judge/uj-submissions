@@ -29,7 +29,7 @@ keycloak:
   auth-server-url: ${KEYCLOAK_AUTH_SERVER_URI:http://localhost:8090/}
   autodetect-bearer-only: true
   credentials:
-    secret: ${KEYCLOAK_CLIENT_SECRET:xL8VRFOn3dZ3ZIpijNgwLY81d1UOJv5H}
+    secret: ${KEYCLOAK_CLIENT_SECRET:ttd1wKBGoNCidGz3Hlh4oQMWayhWSYr0}
   realm: ${KEYCLOAK_REALM:ucb-judge}
   resource: ${KEYCLOAK_CLIENT_ID:uj-submissions}
   ssl-required: none
