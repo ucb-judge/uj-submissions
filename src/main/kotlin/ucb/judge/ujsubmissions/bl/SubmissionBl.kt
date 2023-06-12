@@ -76,6 +76,7 @@ class SubmissionBl constructor(
                 contestProblemId = contest.data!!
                 logger.info("Contest ${submission.contestId} retrieved")
             } catch (e: Exception) {
+                logger.warn("BAC WARNING 403: Student with id '$studentId' tried to submit to contest '${submission.contestId}'")
                 throw UjForbiddenException("Student cannot submit to this contest")
             }
         }
@@ -135,7 +136,7 @@ class SubmissionBl constructor(
         // check if the student is the owner of the submission
         val kcUuid = KeycloakSecurityContextHolder.getSubject() ?: throw UjBadRequestException("Invalid token")
         if(kcUuid != submission.student!!.kcUuid) {
-            logger.warn("Student $kcUuid is not the owner of submission $submissionId")
+            logger.warn("BAC WARNING 403: Student with id '$kcUuid' tried to see submission '$submissionId'")
             throw UjForbiddenException("You are not allowed to see this submission")
         }
 
@@ -200,7 +201,7 @@ fun getSubmissionStatus(submissionId: Long): SubmissionStatusDto {
         logger.info("token ${KeycloakSecurityContextHolder.getSubject()}")
         val kcUuid = KeycloakSecurityContextHolder.getSubject() ?: throw UjBadRequestException("Invalid token")
         if(kcUuid != submission.student!!.kcUuid) {
-            logger.warn("Student $kcUuid is not the owner of submission $submissionId")
+            logger.warn("BAC WARNING 403: Student with id '$kcUuid' tried to see submission '$submissionId'")
             throw UjForbiddenException("You are not allowed to see this submission")
         }
 
