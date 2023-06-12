@@ -1,7 +1,9 @@
 package ucb.judge.ujsubmissions.bl
 
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageImpl
+import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
-import org.springframework.web.multipart.MultipartFile
 import ucb.judge.ujsubmissions.amqp.producer.SubmissionProducer
 import ucb.judge.ujsubmissions.dao.*
 import ucb.judge.ujsubmissions.dao.repository.ContestProblemRepository
@@ -227,5 +229,42 @@ fun getSubmissionStatus(submissionId: Long): SubmissionStatusDto {
             testcases = submissionStatusList,
             testcaseCount = testcaseCount
         )
+    }
+
+    fun getAllSubmissions(page: Int, size: Int): Page<SubmissionTableDto> {
+        logger.info("Getting all problems for user")
+        val studentId = getStudentId()
+        val pageable = PageRequest.of(page, size);
+        logger.info("Getting submissions for student $studentId")
+        return submissionRepository.findAll(pageable,studentId).map {
+            submissionToSubmissionDto(it)
+        }
+    }
+
+    fun getStudentId(): Long {
+        val token = "Bearer ${keycloakBl.getToken()}"
+        val kcUuid = KeycloakSecurityContextHolder.getSubject() ?: throw UjBadRequestException("Invalid token")
+        return ujUsersService.getStudentByKcUuid(kcUuid, token).data ?: throw UjNotFoundException("Student not found in Keycloak")
+    }
+
+    fun submissionToSubmissionDto(submission: Submission): SubmissionTableDto {
+        logger.info("Converting submission ${submission.submissionId} to SubmissionTableDto")
+        val submissionDto = SubmissionTableDto()
+        submissionDto.submissionId = submission.submissionId
+        submissionDto.problem = ProblemMinimalDto(
+            problemId = submission.contestProblem!!.problem!!.problemId,
+            title = submission.contestProblem!!.problem!!.title
+        )
+        submissionDto.language = LanguageDto(
+            languageId = submission.language!!.languageId,
+            extension = submission.language!!.extension,
+            name = submission.language!!.name,
+        )
+        submissionDto.submissionDate = submission.submissionDate!!
+        submissionDto.verdict = VerdictTypeDto(
+            verdictTypeId = submission.verdictType!!.verdictTypeId,
+            name = submission.verdictType!!.description,
+        )
+        return submissionDto
     }
 }

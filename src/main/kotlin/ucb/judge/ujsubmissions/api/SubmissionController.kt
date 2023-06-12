@@ -1,13 +1,11 @@
 package ucb.judge.ujsubmissions.api
 
+import org.springframework.data.domain.Page
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import ucb.judge.ujsubmissions.bl.SubmissionBl
-import ucb.judge.ujsubmissions.dto.NewSubmissionDto
-import ucb.judge.ujsubmissions.dto.ResponseDto
-import ucb.judge.ujsubmissions.dto.SubmissionDto
-import ucb.judge.ujsubmissions.dto.SubmissionStatusDto
+import ucb.judge.ujsubmissions.dto.*
 
 @RestController
 @RequestMapping("/api/v1/submissions")
@@ -49,5 +47,14 @@ class SubmissionController constructor(
     fun getSubmissionStatusById(@PathVariable id: Long): ResponseEntity<ResponseDto<SubmissionStatusDto>> {
         val submission = submissionBl.getSubmissionStatus(id)
         return ResponseEntity(ResponseDto(data = submission, message = "Submission retrieved successfully", successful = true), HttpStatus.OK)
+    }
+
+    @GetMapping
+    fun getAllSubmissions(
+        @RequestParam page: Int,
+        @RequestParam size: Int
+    ): ResponseEntity<ResponseDto<Page<SubmissionTableDto>>> {
+        val submissions: Page<SubmissionTableDto> = submissionBl.getAllSubmissions(page, size);
+        return ResponseEntity(ResponseDto(data = submissions, message = "Submissions retrieved successfully", successful = true), HttpStatus.OK)
     }
 }
